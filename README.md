@@ -12,6 +12,7 @@ Deploy applications using git with zero down time. Inspired by dokku but should 
 * nginx (server)
 * sshd (server)
 * git
+* sudo
 
 ### Installation
 
@@ -36,7 +37,7 @@ http {
 
 To allow user deployku to reload nginx configuration via sudo add following line to /etc/sudoers
 ```bash
-%deployku ALL=(ALL) NOPASSWD:/usr/bin/nginx -s reload
+%deployku ALL=(ALL) NOPASSWD:/usr/sbin/nginx -s reload
 ```
 
 Store path to deployku into ~deployku/.sshcommand:
@@ -48,6 +49,7 @@ As user deployku add first ssh key. The first user will be manager and will have
 The command reads one line from stdin and expects the line to be a public ssh key. So you can do something like this:
 ```bash
 su - deployku
+mkdir ~/.ssh
 cat id_rsa.pub | deployku access:add peter
 ```
 
@@ -157,12 +159,12 @@ ssh deployku@localhost app:create myapp
 
 Create new database on running database server
 ```bash
-ssh deployku@localhost postgres:db:create dbserver myapp-db
+ssh deployku@localhost postgres:db:create dbserver myappdb
 ```
 
 Link created database to our application
 ```bash
-ssh deployku@localhost postgres:db:link dbserver myapp-db myapp
+ssh deployku@localhost postgres:db:link dbserver myappdb myapp
 ```
 
 To say that we want to install postgresql dev tools in our container you can create file `deployku.yml` in your
@@ -194,6 +196,7 @@ ssh deployku@localhost app:config:show myapp
 
 Setup application environment like SECRET_KEY_BASE for rails app
 ```bash
+bundle exec rake secret
 ssh deployku@localhost app:config:set myapp SECRET_KEY_BASE somesecretkey
 ```
 
@@ -210,7 +213,7 @@ git push deployku master
 ### Connect to database
 Use ssh with `-t` option.
 ```bash
-ssh -t deployku@localhost postgres:db:connect dbserver myapp-db
+ssh -t deployku@localhost postgres:db:connect dbserver myappdb
 ```
 
 ### Exec command in container environment
