@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+
+$:.unshift File.expand_path(File.join(File.dirname(__FILE__), "../lib"))
+
+require 'deployku'
+
+cmd = ARGV.shift
+
+def print_help
+  puts <<EOF
+
+  deployku <command> [command-options]
+
+Commands:
+#{Deployku::Plugin.help}
+EOF
+end
+
+unless cmd
+  print_help
+  exit 1
+end
+
+Deployku::Config.load
+
+case cmd
+  when 'help'
+    print_help
+    exit 0
+
+  when /^([^:]+):(.*)$/
+    plugin = Deployku::Plugin.find_plugin($1)
+    unless plugin
+      print_help
+      exit 1
+    end
+    plugin.run($2, ARGV)
+
+  when 'git-receive-pack'
+    Deployku::GitPlugin.instance.receive_pack(ARGV.shift)
+
+  else
+    print_help
+    exit 1
+end
