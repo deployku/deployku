@@ -27,7 +27,7 @@ module Deployku::Containerable
     old_cid = get_container_id(app_name)
     if start(app_name)
       # stops old application only if new instance was spawn
-      stop(app_name, cid: old_cid)
+      stop(app_name, cid: old_cid) if old_cid
     end
   end
 
