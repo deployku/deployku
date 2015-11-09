@@ -1,4 +1,6 @@
-# DEPLOYKU: Deploy with zero down time with git
+# DEPLOYKU
+
+Deploy applications using git with zero down time. Inspired by dokku but should be distribution independent.
 
 ## Instalation instructions
 
@@ -39,7 +41,7 @@ To allow user deployku to reload nginx configuration via sudo add following line
 
 Store path to deployku into ~deployku/.sshcommand:
 ```bash
-echo `which deployku` | > /home/deployku/.sshcommand
+which deployku > /home/deployku/.sshcommand
 ```
 
 As user deployku add first ssh key. The first user will be manager and will have admin privileges to all repositories.
@@ -115,7 +117,7 @@ Check our configuration
 ssh deployku@localhost app:config:show myapp
 ```
 
-Setup application environment like SECRET_KEY_BASE for rais app
+Setup application environment like SECRET_KEY_BASE for rails app
 ```bash
 ssh deployku@localhost app:config:set myapp SECRET_KEY_BASE somesecretkey
 ```
