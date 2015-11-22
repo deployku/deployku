@@ -1,7 +1,5 @@
 require 'fileutils'
-require 'yaml'
 require 'securerandom'
-require 'open3'
 
 module Deployku
   class PostgresPlugin < Deployku::Plugin
