@@ -117,6 +117,12 @@ module Deployku
     describe :status, '<NAME>', 'show container status', acl_sys: :admin
     describe :stop, '<NAME>', 'stops running container', acl_sys: :admin
     describe :restart, '<NAME>', 'restarts container', acl_sys: :admin
+    def restart(app_name)
+      # restart can not be done seamlessly because we use named containers
+      stop(app_name)
+      start(app_name)
+    end
+
     describe :logs, '<NAME>', 'show app logs', acl_sys: :admin
 
     # methods from configurable
