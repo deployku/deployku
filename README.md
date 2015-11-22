@@ -129,7 +129,14 @@ RUN /bin/bash -l -c 'cd app && RAILS_ENV=production bundle install --without dev
 
 ## Supported applications
 
+### Autoconfiguration for frameworks
+
 * Ruby on Rails
+
+### Services
+
+* PostgreSQL
+* Redis
 
 ## Examples
 
@@ -150,7 +157,14 @@ ssh deployku@localhost postgres:create dbserver
 ssh deployku@localhost postgres:start dbserver
 ```
 
-### Create and configure new Rails application
+### Create and start new Redis server
+
+```bash
+ssh deployku@localhost redis:create redis
+ssh deployku@localhost redis:start redis
+```
+
+### Create and configure new Rails application with PostgreSQL and Redis
 
 Create new repository on deployku server (replace localhost with name of your server)
 ```bash
@@ -165,6 +179,11 @@ ssh deployku@localhost postgres:db:create dbserver myappdb
 Link created database to our application
 ```bash
 ssh deployku@localhost postgres:db:link dbserver myappdb myapp
+```
+
+Link Redis to our application
+```bash
+ssh deployku@localhost redis:link redis myapp
 ```
 
 To say that we want to install postgresql dev tools in our container you can create file `deployku.yml` in your
