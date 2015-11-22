@@ -137,7 +137,7 @@ module Deployku
     end
 
     def container_name(app_name)
-      "deployku-postgres-#{app_name}"
+      "deployku-postgres-#{Deployku.sanitize_app_name(app_name)}"
     end
   end
 end
