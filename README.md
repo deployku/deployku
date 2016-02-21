@@ -230,9 +230,25 @@ git push deployku master
 ```
 
 ### Connect to database
-Use ssh with `-t` option.
+To connect as postgres user use ssh with `-t` option.
 ```bash
 ssh -t deployku@localhost postgres:db:connect dbserver myappdb
+```
+
+and to connect as linked application:
+```bash
+ssh -t deployku@localhost postgres:db:connect:app dbserver myapp
+```
+
+### Backup database
+To backup all databases use:
+```bash
+ssh deployku@localhost postgres:dumpall dbserver
+```
+
+and to backup only one database use:
+```bash
+ssh deployku@localhost postgres:db:dump dbserver myappdb
 ```
 
 ### Exec command in container environment
