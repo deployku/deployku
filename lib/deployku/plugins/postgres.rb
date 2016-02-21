@@ -26,6 +26,7 @@ module Deployku
     def delete(name)
       app_dir = dir(name)
       if Dir.exists?(app_dir)
+        puts "removing: #{app_dir}"
         FileUtils.rm_rf(app_dir)
       end
     end
@@ -35,6 +36,31 @@ module Deployku
       Dir.glob(File.join(Deployku::Config.home, '.postgres', '*')) do |path|
         puts File.basename(path) if File.directory?(path)
       end
+    end
+
+    describe :dumpall, '<NAME>', 'calls pg_dumpall on specified PostgreSQL instance', acl_sys: :admin
+    def dumpall(name)
+      config_load(name)
+      cid = get_container_id(name)
+      unless Deployku::Engine.running?(cid)
+        puts "Database instance '#{name}' is not running."
+        exit 1
+      end
+      ip = Deployku::Engine.ip(cid)
+      system "PGPASSWORD=\"#{@config['env']['POSTGRES_PASSWORD']}\" pg_dumpall -h #{ip} -U postgres"
+    end
+
+    describe 'db:dump', '<NAME> <DB_NAME>', 'calls pg_dump on specified database', acl_sys: :admin
+    def db_dump(name, db_name)
+      config_load(name)
+      cid = get_container_id(name)
+      unless Deployku::Engine.running?(cid)
+        puts "Database instance '#{name}' is not running."
+        exit 1
+      end
+      ip = Deployku::Engine.ip(cid)
+      db = Deployku.sanitize_app_name(db_name)
+      system "PGPASSWORD=\"#{@config['env']['POSTGRES_PASSWORD']}\" pg_dump -h #{ip} -d #{db} -U postgres"
     end
 
     describe 'db:create', '<NAME> <DB_NAME>', 'create a database in postgres instance', acl_sys: :admin
@@ -47,7 +73,8 @@ module Deployku
       end
       ip = Deployku::Engine.ip(cid)
       db = Deployku.sanitize_app_name(db_name)
-      system "echo \"#{@config['env']['POSTGRES_PASSWORD']}\n\" 'CREATE DATABASE #{db};' | psql -h #{ip} -U postgres"
+      system "echo 'CREATE DATABASE #{db};' | PGPASSWORD=\"#{@config['env']['POSTGRES_PASSWORD']}\" psql -h #{ip} -U postgres"
+      #system "echo \"#{@config['env']['POSTGRES_PASSWORD']}\n\" 'CREATE DATABASE #{db};' | psql -h #{ip} -U postgres"
     end
 
     describe 'db:drop', '<NAME> <DB_NAME>', 'destroy a database in postgres instance', acl_sys: :admin
@@ -60,7 +87,8 @@ module Deployku
       end
       ip = Deployku::Engine.ip(cid)
       db = Deployku.sanitize_app_name(db_name)
-      system "echo \"#{@config['env']['POSTGRES_PASSWORD']}\n\" 'DROP DATABASE #{db};' | psql -h #{ip} -U postgres"
+      #system "echo \"#{@config['env']['POSTGRES_PASSWORD']}\n\" 'DROP DATABASE #{db};' | psql -h #{ip} -U postgres"
+      system "echo 'DROP DATABASE #{db};' | PGPASSWORD=\"#{@config['env']['POSTGRES_PASSWORD']}\" psql -h #{ip} -U postgres"
     end
 
     describe 'db:link', '<NAME> <DB_NAME> <APP>', 'connect appliaction with database', acl_sys: :admin
@@ -72,8 +100,8 @@ module Deployku
       user_name = 'user_' + SecureRandom.uuid.gsub('-','')
       user_passwd = SecureRandom.uuid
       database_url = "postgres://#{user_name}:#{user_passwd}@#{container_name(name)}/#{db}"
-      system "echo \"#{@config['env']['POSTGRES_PASSWORD']}\n\" \"CREATE USER #{user_name} WITH PASSWORD '#{user_passwd}';\" | psql -h #{ip} -U postgres"
-      system "echo \"#{@config['env']['POSTGRES_PASSWORD']}\n\" 'GRANT ALL ON DATABASE #{db} TO #{user_name};' | psql -h #{ip} -U postgres"
+      system "echo \"CREATE USER #{user_name} WITH PASSWORD '#{user_passwd}';\" | PGPASSWORD=\"#{@config['env']['POSTGRES_PASSWORD']}\" psql -h #{ip} -U postgres"
+      system "echo 'GRANT ALL ON DATABASE #{db} TO #{user_name};' | PGPASSWORD=\"#{@config['env']['POSTGRES_PASSWORD']}\" psql -h #{ip} -U postgres"
       if $?.exitstatus == 0
         Deployku::AppPlugin.run('config:set', [app_name, 'DATABASE_URL', database_url])
         Deployku::AppPlugin.run(:link, [app_name, container_name(name)])
@@ -92,6 +120,20 @@ module Deployku
       system "PGPASSWORD=\"#{@config['env']['POSTGRES_PASSWORD']}\" psql -h #{ip} -U postgres #{dbname}"
     end
 
+    describe 'db:connect:app', '<NAME> <APP_NAME>', 'connect to database as an app user and enter prompt', acl_app: { 1 => :admin }
+    def db_connect_app(name, app_name)
+      config_load(name)
+      db_id = get_container_id(name)
+      ip = Deployku::Engine.ip(db_id)
+      database_url = Deployku::AppPlugin.instance.config_get(app_name, 'DATABASE_URL')
+      if database_url =~ /postgres:\/\/([^:]+):([^@]+)@[^\/]+\/([^\/]+)/
+        user_name, password, dbname = $1, $2, $3
+        system "PGPASSWORD=\"#{password}\" psql -h #{ip} -U #{user_name} #{dbname}"
+      else
+        puts "Wrong DATABASE_URL: #{database_url}"
+      end
+    end
+
     # methods from containerable
     describe :start, '<NAME>', 'starts container', acl_sys: :admin
     def start(app_name)
@@ -103,6 +145,7 @@ module Deployku
       end
       @config['env']['PGDATA'] = '/postgresql/' unless @config['env']['PGDATA']
       @config['env']['POSTGRES_PASSWORD'] = SecureRandom.uuid unless @config['env']['POSTGRES_PASSWORD']
+      @config['env']['PGPASSWORD'] = @config['env']['POSTGRES_PASSWORD']
       config_save(app_name)
 
       Deployku::Config.merge!(@config)
@@ -110,6 +153,13 @@ module Deployku
       exit 1 if $?.nil? || $?.exitstatus != 0
       set_container_id(app_name, container_name(app_name))
       puts "Container #{app_hash} started."
+    end
+
+    describe :run, '<NAME> <CMD>', 'starts a cmd in postgresql environment', acl_sys: :admin
+    def run(app_name, *cmd)
+      config_load(app_name)
+      Deployku::Config.merge!(@config)
+      Deployku::Engine.run(@config['from'], dir(app_name), *cmd)
     end
 
     describe :status, '<NAME>', 'show container status', acl_sys: :admin

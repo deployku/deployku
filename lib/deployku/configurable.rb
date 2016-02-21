@@ -21,6 +21,11 @@ module Deployku::Configurable
     config_save(app_name)
   end
 
+  def config_get(app_name, var)
+    config_load(app_name)
+    @config['env'][var.to_s]
+  end
+
   def config_set_from(app_name, value)
     config_load(app_name)
     @config['from'] = value
