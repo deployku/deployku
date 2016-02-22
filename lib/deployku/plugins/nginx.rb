@@ -11,7 +11,7 @@ module Deployku
       app_plug.config['nginx']['enabled'] = true
       app_plug.config['nginx']['port'] = 80 unless app_plug.config['nginx']['port']
       app_plug.config['nginx']['wait'] = 300 unless app_plug.config['nginx']['wait']
-      app_plug.config['nginx']['public_volume'] = '/app/public/' unless app_plug.config['nginx']['public_volume']
+      app_plug.config['nginx']['public_volume'] = '/public/' unless app_plug.config['nginx']['public_volume']
       app_plug.config_save(app_name)
     end
 

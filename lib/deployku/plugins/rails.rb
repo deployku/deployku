@@ -5,7 +5,7 @@ module Deployku
     PACKAGES = ['nodejs']
 
     def volumes
-      ['/app/public/']
+      ['/public/']
     end
 
     def port
@@ -27,6 +27,8 @@ cd app
 export RAILS_ENV=production
 bundle exec rake db:migrate RAILS_ENV=production
 bundle exec rake assets:precompile RAILS_ENV=production
+
+rsync -av public/ /public/
 
 bundle exec rails s -p #{Deployku::Config.port} -b 0.0.0.0 -e production
 EOF
@@ -58,7 +60,7 @@ RUN /bin/bash -l -c 'gem install bundler'
 
 RUN /bin/bash -l -c 'rvm cleanup all'
 
-RUN apt-get install -y #{packages.join(' ')}
+RUN apt-get install -y rsync #{packages.join(' ')}
 
 RUN apt-get -y autoclean
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -70,6 +72,7 @@ ENTRYPOINT ["/start"]
 ADD start /start
 
 ADD app /app
+RUN /bin/bash -l -c 'mkdir -p /public'
 RUN /bin/bash -l -c 'cd app && RAILS_ENV=production bundle install --without development test'
 EOF
         end
