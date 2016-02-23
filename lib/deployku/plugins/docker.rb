@@ -26,8 +26,9 @@ module Deployku
       system "docker logs #{app_hash}"
     end
 
-    def rebuild(app_name, dir)
-      system "docker build -t #{app_name}:latest #{dir}"
+    def rebuild(app_name, dir, nocache)
+      nocache_str = nocache ? '--no-cache' : ''
+      system "docker build #{nocache_str} -t #{app_name}:latest #{dir}"
     end
 
     def running?(app_hash)

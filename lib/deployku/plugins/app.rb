@@ -50,8 +50,8 @@ module Deployku
     describe :restart, '<APP>', 'restarts container', acl_app: { 0 => :admin }
     describe :logs, '<APP>', 'show app logs', acl_app: { 0 => :admin }
 
-    describe :rebuild, '<APP> [REV]', 'rebuild container', acl_app: { 0 => :admin }
-    def rebuild(app_name, new_rev=nil)
+    describe :rebuild, '<APP> [REV] [NOCACHE]', 'rebuild container. REV can be eg. master NOCACHE can be true', acl_app: { 0 => :admin }
+    def rebuild(app_name, new_rev=nil, nocache=false)
       app_dir = dir(app_name)
       app_name = File.basename(app_dir)
       Dir.mktmpdir('deployku_') do |tmp_dir|
@@ -95,7 +95,7 @@ module Deployku
           end
         end
 
-        if Deployku::Engine.rebuild(app_name, tmp_dir)
+        if Deployku::Engine.rebuild(app_name, tmp_dir, nocache == 'true')
           plugin.volumes.each do |volume|
             config_add_volume(app_name, volume)
           end if plugin.respond_to?(:volumes)

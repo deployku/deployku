@@ -41,7 +41,7 @@ module Deployku::Engine
     puts 'not implemented'
   end
 
-  def rebuild(app_name, dir)
+  def rebuild(app_name, dir, nocache)
     puts 'not implemented'
   end
 
